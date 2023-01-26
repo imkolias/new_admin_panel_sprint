@@ -96,10 +96,16 @@ def sqliterator(cursor, arraysize=1000):
 
 
 class PostgresSaver:
+    """Save to Postgres DB class
+
+        save_all_data() - main class to proccess all tables inside DB
+                          run all workers
+
+    """
 
     def __init__(self, pgcon: _connection):
         self.curs = pgcon.cursor()
-        self.slicesize = 100
+        self.slicesize = 200  # size of on slice for INSERT
 
     def save_all_data(self, data: DataContainer):
         self.data = data
@@ -115,20 +121,21 @@ class PostgresSaver:
         if count == int(saved_count[0]):
             print('OK, saved:', saved_count[0])
         else:
-            print('ERROR, wrong save count, should be:', count,
+            print('[ !!! ] ERROR, wrong save count, should be:', count,
                   'saved:', saved_count[0])
         print()
 
     def save_movies(self, mdata: list):
         print('[Save Movies table in db]')
         elems_count = len(mdata)
-
-        times = elems_count // self.slicesize
-        print('Elements to save:', elems_count)
+        slsize = self.slicesize
+        times = elems_count // slsize
+        print('rows to insert:', elems_count)
         for time in range(times + 1):
             print('.', end='')
             sql_params = []
-            for elem in islice(mdata, 0 + (time * 100), 100 + (time * 100)):
+            for elem in islice(mdata, 0 + (time * slsize),
+                               slsize + (time * slsize)):
                 sql_params.append((elem.id, elem.title, elem.description,
                                    elem.rating, elem.type, elem.created_at,
                                    elem.updated_at))
@@ -144,13 +151,14 @@ class PostgresSaver:
     def save_persons(self, mdata: list):
         print('[Save Person table in db]')
         elems_count = len(mdata)
-
-        times = elems_count // self.slicesize
-        print('Elements to save:', elems_count)
+        slsize = self.slicesize
+        times = elems_count // slsize
+        print('rows to insert:', elems_count)
         for time in range(times + 1):
             print('.', end='')
             sql_params = []
-            for elem in islice(mdata, 0 + (time * 100), 100 + (time * 100)):
+            for elem in islice(mdata, 0 + (time * slsize),
+                               slsize + (time * slsize)):
                 sql_params.append((elem.id, elem.full_name,
                                    elem.created_at, elem.updated_at))
 
@@ -163,13 +171,14 @@ class PostgresSaver:
     def save_genres(self, mdata: list):
         print('[Save Genres table in db]')
         elems_count = len(mdata)
-
-        times = elems_count // self.slicesize
-        print('Elements to save:', elems_count)
+        slsize = self.slicesize
+        times = elems_count // slsize
+        print('rows to insert:', elems_count)
         for time in range(times + 1):
             print('.', end='')
             sql_params = []
-            for elem in islice(mdata, 0 + (time * 100), 100 + (time * 100)):
+            for elem in islice(mdata, 0 + (time * slsize),
+                               slsize + (time * slsize)):
                 sql_params.append((elem.id, elem.name,
                                    elem.created_at, elem.updated_at))
 
@@ -182,12 +191,14 @@ class PostgresSaver:
     def save_genre_film_work(self, mdata: list):
         print('[Save Genres Film Work table in db]')
         elems_count = len(mdata)
-        print('Elements to save:', elems_count)
-        times = elems_count // self.slicesize
+        slsize = self.slicesize
+        print('rows to insert:', elems_count)
+        times = elems_count // slsize
         for time in range(times + 1):
             print('.', end='')
             sql_params = []
-            for elem in islice(mdata, 0 + (time * 100), 100 + (time * 100)):
+            for elem in islice(mdata, 0 + (time * slsize),
+                               slsize + (time * slsize)):
                 sql_params.append((elem.id, elem.film_work_id,
                                    elem.genre_id, elem.created_at))
 
@@ -200,12 +211,13 @@ class PostgresSaver:
     def save_person_film_work(self, mdata: list):
         print('[Save Persons Film Work table in db]')
         elems_count = len(mdata)
-
-        times = elems_count // self.slicesize
+        slsize = self.slicesize
+        times = elems_count // slsize
         for time in range(times + 1):
             print('.', end='')
             sql_params = []
-            for elem in islice(mdata, 0 + (time * 100), 100 + (time * 100)):
+            for elem in islice(mdata, 0 + (time * slsize),
+                               slsize + (time * slsize)):
                 sql_params.append((elem.id, elem.film_work_id, elem.person_id,
                                    elem.role, elem.created_at))
 
@@ -217,6 +229,14 @@ class PostgresSaver:
 
 
 class SQLiteExtractor:
+    """
+        SQLiteExtractor - class to read selected .sqlite file
+                          find predefined Tables.
+
+                          There are 5 workers, one for
+                          each table, this methods return
+                          containers
+    """
     curs = 0
 
     def __init__(self, connection: sqlite3.Connection):
@@ -250,6 +270,16 @@ class SQLiteExtractor:
 
 
 def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
+    """
+        load_from_sqlite : Main class, start all work.
+                           First: open connections to DB's
+                           Second: run Extract data from sqlite,
+                           put them on special datacontainer
+                           Third and final: run Data saver,
+                           insert all extracted data to
+                           Postrges DB
+    """
+    print("[All connections - ok]")
     postgres_saver = PostgresSaver(pg_conn)
     sqlite_extractor = SQLiteExtractor(connection)
 
