@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 import uuid
 from itertools import islice
 
+
 load_dotenv()
 
 dsl = {
@@ -39,6 +40,7 @@ class Movie:
     title: str
     description: str
     creation_date: str
+    file_path: str
     created_at: str
     updated_at: str
     rating: float = field(default=0.0)
@@ -50,6 +52,7 @@ class Genre:
     name: str
     created_at: str
     updated_at: str
+    description: str
     id: uuid.UUID = field(default_factory=uuid.uuid4)
 
 
@@ -85,6 +88,16 @@ class DataContainer:
     persons: list
     genre_film_works: list
     person_film_works: list
+
+
+def SQLIterator(cursor, arraysize=1000):
+    while True:
+        results = cursor.fetchmany(arraysize)
+        if not results:
+            break
+        for item in results:
+            yield item
+
 
 
 class PostgresSaver:
@@ -202,41 +215,35 @@ class SQLiteExtractor:
 
     def __init__(self, connection: sqlite3.Connection):
         self.curs = connection.cursor()
+        print("[Start read data from SQLite db]")
 
     def extract_movies(self):
-        self.curs.execute(
-            "SELECT id, title, description, creation_date, rating, type, created_at, updated_at FROM film_work;")
-        rows = self.curs.fetchall()
-
-        return [Movie(**row) for row in rows]
+        self.curs.execute("SELECT * FROM film_work;")
+        print("Get data from film_work")
+        return [Movie(**elem) for elem in SQLIterator(self.curs)]
 
     def extract_persons(self):
-        self.curs.execute("SELECT id, full_name, created_at, updated_at FROM person;")
-        rows = self.curs.fetchall()
-
-        return [Person(**row) for row in rows]
+        self.curs.execute("SELECT * FROM person;")
+        print("Get data from person")
+        return [Person(**elem) for elem in SQLIterator(self.curs)]
 
     def extract_genres(self):
-        self.curs.execute("SELECT id, name, created_at, updated_at FROM genre;")
-        rows = self.curs.fetchall()
-
-        return [Genre(**row) for row in rows]
+        self.curs.execute("SELECT * FROM genre;")
+        print("Get data from genre")
+        return [Genre(**elem) for elem in SQLIterator(self.curs)]
 
     def extract_genresfilmwork(self):
-        self.curs.execute("SELECT id, film_work_id, genre_id, created_at FROM genre_film_work;")
-        rows = self.curs.fetchall()
-
-        return [GenreFilmWork(**row) for row in rows]
+        self.curs.execute("SELECT * FROM genre_film_work;")
+        print("Get data from genre_film_work")
+        return [GenreFilmWork(**elem) for elem in SQLIterator(self.curs)]
 
     def extract_person_film_work(self):
-        self.curs.execute("SELECT id, film_work_id, person_id, role, created_at FROM person_film_work;")
-        rows = self.curs.fetchall()
-
-        return [PersonFilmWork(**row) for row in rows]
+        self.curs.execute("SELECT * FROM person_film_work;")
+        print("Get data from person_film_work")
+        return [PersonFilmWork(**elem) for elem in SQLIterator(self.curs)]
 
 
 def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
-    """Основной метод загрузки данных из SQLite в Postgres"""
     postgres_saver = PostgresSaver(pg_conn)
     sqlite_extractor = SQLiteExtractor(connection)
 
@@ -247,6 +254,7 @@ def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
                          sqlite_extractor.extract_person_film_work()
                          )
 
+    print()
     postgres_saver.save_all_data(data)
 
 
@@ -256,8 +264,8 @@ if __name__ == '__main__':
     if os.path.exists(sqlitedbfile):
 
         try:
-            with conn_context(sqlitedbfile) as sqlite_conn, psycopg2.connect(**dsl,
-                                                                             cursor_factory=DictCursor) as pg_conn:
+            with conn_context(sqlitedbfile) as sqlite_conn, \
+                    psycopg2.connect(**dsl, cursor_factory=DictCursor) as pg_conn:
                 load_from_sqlite(sqlite_conn, pg_conn)
         except psycopg2.OperationalError:
             print("[Error] - Can't connect to Postgres DB")
