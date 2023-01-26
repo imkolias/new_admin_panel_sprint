@@ -5,8 +5,8 @@ from django.utils.translation import gettext_lazy as _
 
 
 class ElemType(models.TextChoices):
-    movie = 'mv', _('Movie')
-    tv_show = 'tv', _('TV Show')
+    movie = 'movie', _('Movie')
+    tv_show = 'tv show', _('TV Show')
 
 
 class TimeStampedMixin(models.Model):
@@ -61,12 +61,9 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
                                              MaxValueValidator(100)])
     type = models.CharField(_('Movie type'),
                             choices=ElemType.choices,
-                            max_length=2)
+                            max_length=7)
     genres = models.ManyToManyField(Genre, through='GenreFilmwork')
     roles = models.ManyToManyField(Person, through='PersonFilmwork')
-
-    # certificate = models.CharField(_('certificate'), max_length=512, blank=True)
-    # file_path = models.FileField(_('file'), blank=True, null=True, upload_to='movies/')
 
     class Meta:
         db_table = "content\".\"film_work"
@@ -90,7 +87,7 @@ class GenreFilmwork(UUIDMixin):
 class PersonFilmwork(UUIDMixin):
     film_work = models.ForeignKey('Filmwork', on_delete=models.CASCADE)
     person = models.ForeignKey('Person', on_delete=models.CASCADE)
-    role = models.TextField('role', null=True)
+    role = models.TextField('Role', null=True)
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:

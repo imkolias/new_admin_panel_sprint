@@ -1,17 +1,13 @@
 import sqlite3
-
 import psycopg2
-from psycopg2.extensions import connection as _connection
-from psycopg2.extras import DictCursor
-
 import os
-from dotenv import load_dotenv
-
-from contextlib import contextmanager
-
-from dataclasses import dataclass, field
 import uuid
 from itertools import islice
+from psycopg2.extensions import connection as _connection
+from psycopg2.extras import DictCursor
+from dotenv import load_dotenv
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 
 
 load_dotenv()
@@ -90,14 +86,13 @@ class DataContainer:
     person_film_works: list
 
 
-def SQLIterator(cursor, arraysize=1000):
+def sqliterator(cursor, arraysize=1000):
     while True:
         results = cursor.fetchmany(arraysize)
         if not results:
             break
         for item in results:
             yield item
-
 
 
 class PostgresSaver:
@@ -115,99 +110,110 @@ class PostgresSaver:
         self.save_person_film_work(self.data.person_film_works)
 
     def save_check(self, count: int, table_name: str):
-        self.curs.execute(f"SELECT COUNT(id) FROM {table_name}")
+        self.curs.execute(f"SELECT COUNT(id) FROM content.{table_name};")
         saved_count = (self.curs.fetchone())
         if count == int(saved_count[0]):
-            print("OK, saved:", saved_count[0])
+            print('OK, saved:', saved_count[0])
         else:
-            print("ERROR, wrong save count, should be:", count, "saved:", saved_count[0])
+            print('ERROR, wrong save count, should be:', count,
+                  'saved:', saved_count[0])
         print()
 
     def save_movies(self, mdata: list):
-        print("[Save Movies table in db]")
+        print('[Save Movies table in db]')
         elems_count = len(mdata)
 
         times = elems_count // self.slicesize
-        print("Elements to save:", elems_count)
+        print('Elements to save:', elems_count)
         for time in range(times + 1):
-            print(".", end="")
+            print('.', end='')
             sql_params = []
             for elem in islice(mdata, 0 + (time * 100), 100 + (time * 100)):
-                sql_params.append((elem.id, elem.title, elem.description, elem.rating, elem.type, elem.created_at,
+                sql_params.append((elem.id, elem.title, elem.description,
+                                   elem.rating, elem.type, elem.created_at,
                                    elem.updated_at))
 
-            self.curs.executemany("INSERT INTO content.film_work (id, title, description, creation_date, rating, "
-                                  "type, created, modified) VALUES (%s, %s, %s, current_timestamp, %s, %s, %s, %s)"
-                                  " ON CONFLICT (id) DO UPDATE SET id=EXCLUDED.id;", sql_params)
-        self.save_check(elems_count, "content.film_work")
+            self.curs.executemany(
+                "INSERT INTO content.film_work (id, title, description, "
+                "creation_date, rating, type, created, modified) VALUES "
+                "(%s, %s, %s, current_timestamp, %s, %s, %s, %s) ON CONFLICT"
+                " (id) DO UPDATE SET id=EXCLUDED.id;", sql_params)
+
+        self.save_check(elems_count, 'film_work')
 
     def save_persons(self, mdata: list):
-        print("[Save Person table in db]")
+        print('[Save Person table in db]')
         elems_count = len(mdata)
 
         times = elems_count // self.slicesize
-        print("Elements to save:", elems_count)
+        print('Elements to save:', elems_count)
         for time in range(times + 1):
-            print(".", end="")
+            print('.', end='')
             sql_params = []
             for elem in islice(mdata, 0 + (time * 100), 100 + (time * 100)):
-                sql_params.append((elem.id, elem.full_name, elem.created_at, elem.updated_at))
+                sql_params.append((elem.id, elem.full_name,
+                                   elem.created_at, elem.updated_at))
 
-            self.curs.executemany("INSERT INTO content.person (id, full_name, created, modified)"
-                                  " VALUES (%s, %s, %s, %s) ON CONFLICT "
-                                  "(id) DO UPDATE SET id=EXCLUDED.id;", sql_params)
-        self.save_check(elems_count, "content.person")
+            self.curs.executemany(
+                "INSERT INTO content.person (id, full_name, created, modified)"
+                " VALUES (%s, %s, %s, %s) ON CONFLICT (id) DO UPDATE "
+                "SET id=EXCLUDED.id;", sql_params)
+        self.save_check(elems_count, 'person')
 
     def save_genres(self, mdata: list):
-        print("[Save Genres table in db]")
+        print('[Save Genres table in db]')
         elems_count = len(mdata)
 
         times = elems_count // self.slicesize
-        print("Elements to save:", elems_count)
+        print('Elements to save:', elems_count)
         for time in range(times + 1):
-            print(".", end="")
+            print('.', end='')
             sql_params = []
             for elem in islice(mdata, 0 + (time * 100), 100 + (time * 100)):
-                sql_params.append((elem.id, elem.name, elem.created_at, elem.updated_at))
+                sql_params.append((elem.id, elem.name,
+                                   elem.created_at, elem.updated_at))
 
-            self.curs.executemany("INSERT INTO content.genre (id, name, created, modified)"
-                                  " VALUES (%s, %s, %s, %s) ON CONFLICT "
-                                  "(id) DO UPDATE SET id=EXCLUDED.id;", sql_params)
-        self.save_check(elems_count, "content.genre")
+            self.curs.executemany(
+                "INSERT INTO content.genre (id, name, created, modified) "
+                "VALUES (%s, %s, %s, %s) ON CONFLICT (id) "
+                "DO UPDATE SET id=EXCLUDED.id;", sql_params)
+        self.save_check(elems_count, 'genre')
 
     def save_genre_film_work(self, mdata: list):
-        print("[Save Genres Film Work table in db]")
+        print('[Save Genres Film Work table in db]')
         elems_count = len(mdata)
-        print("Elements to save:", elems_count)
+        print('Elements to save:', elems_count)
         times = elems_count // self.slicesize
-        print(".", end="")
         for time in range(times + 1):
-            print(".", end="")
+            print('.', end='')
             sql_params = []
             for elem in islice(mdata, 0 + (time * 100), 100 + (time * 100)):
-                sql_params.append((elem.id, elem.film_work_id, elem.genre_id, elem.created_at))
+                sql_params.append((elem.id, elem.film_work_id,
+                                   elem.genre_id, elem.created_at))
 
-            self.curs.executemany("INSERT INTO content.genre_film_work (id, film_work_id, genre_id, created)"
-                                  " VALUES (%s, %s, %s, %s) ON CONFLICT "
-                                  "(id) DO UPDATE SET id=EXCLUDED.id;", sql_params)
-        self.save_check(elems_count, "content.genre_film_work")
+            self.curs.executemany(
+                "INSERT INTO content.genre_film_work (id, film_work_id, "
+                "genre_id, created) VALUES (%s, %s, %s, %s) ON CONFLICT (id)"
+                " DO UPDATE SET id=EXCLUDED.id;", sql_params)
+        self.save_check(elems_count, 'genre_film_work')
 
     def save_person_film_work(self, mdata: list):
-        print("[Save Persons Film Work table in db]")
+        print('[Save Persons Film Work table in db]')
         elems_count = len(mdata)
 
         times = elems_count // self.slicesize
-        print(".", end="")
         for time in range(times + 1):
-            print(".", end="")
+            print('.', end='')
             sql_params = []
             for elem in islice(mdata, 0 + (time * 100), 100 + (time * 100)):
-                sql_params.append((elem.id, elem.film_work_id, elem.person_id, elem.role, elem.created_at))
+                sql_params.append((elem.id, elem.film_work_id, elem.person_id,
+                                   elem.role, elem.created_at))
 
-            self.curs.executemany("INSERT INTO content.person_film_work (id, film_work_id, person_id, role, created)"
-                                  " VALUES (%s, %s, %s, %s, %s) ON CONFLICT "
-                                  "(id) DO UPDATE SET id=EXCLUDED.id;", sql_params)
-        self.save_check(elems_count, "content.person_film_work")
+            self.curs.executemany(
+                "INSERT INTO content.person_film_work (id, film_work_id,"
+                " person_id, role, created) VALUES (%s, %s, %s, %s, %s)"
+                " ON CONFLICT (id) DO UPDATE SET id=EXCLUDED.id;", sql_params)
+        self.save_check(elems_count, 'person_film_work')
 
 
 class SQLiteExtractor:
@@ -215,32 +221,32 @@ class SQLiteExtractor:
 
     def __init__(self, connection: sqlite3.Connection):
         self.curs = connection.cursor()
-        print("[Start read data from SQLite db]")
+        print('[Start read data from SQLite db]')
 
     def extract_movies(self):
         self.curs.execute("SELECT * FROM film_work;")
-        print("Get data from film_work")
-        return [Movie(**elem) for elem in SQLIterator(self.curs)]
+        print('Get data from film_work')
+        return [Movie(**elem) for elem in sqliterator(self.curs)]
 
     def extract_persons(self):
         self.curs.execute("SELECT * FROM person;")
-        print("Get data from person")
-        return [Person(**elem) for elem in SQLIterator(self.curs)]
+        print('Get data from person')
+        return [Person(**elem) for elem in sqliterator(self.curs)]
 
     def extract_genres(self):
         self.curs.execute("SELECT * FROM genre;")
-        print("Get data from genre")
-        return [Genre(**elem) for elem in SQLIterator(self.curs)]
+        print('Get data from genre')
+        return [Genre(**elem) for elem in sqliterator(self.curs)]
 
     def extract_genresfilmwork(self):
         self.curs.execute("SELECT * FROM genre_film_work;")
-        print("Get data from genre_film_work")
-        return [GenreFilmWork(**elem) for elem in SQLIterator(self.curs)]
+        print('Get data from genre_film_work')
+        return [GenreFilmWork(**elem) for elem in sqliterator(self.curs)]
 
     def extract_person_film_work(self):
         self.curs.execute("SELECT * FROM person_film_work;")
-        print("Get data from person_film_work")
-        return [PersonFilmWork(**elem) for elem in SQLIterator(self.curs)]
+        print('Get data from person_film_work')
+        return [PersonFilmWork(**elem) for elem in sqliterator(self.curs)]
 
 
 def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
@@ -251,7 +257,7 @@ def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
                          sqlite_extractor.extract_genres(),
                          sqlite_extractor.extract_persons(),
                          sqlite_extractor.extract_genresfilmwork(),
-                         sqlite_extractor.extract_person_film_work()
+                         sqlite_extractor.extract_person_film_work(),
                          )
 
     print()
@@ -265,10 +271,10 @@ if __name__ == '__main__':
 
         try:
             with conn_context(sqlitedbfile) as sqlite_conn, \
-                    psycopg2.connect(**dsl, cursor_factory=DictCursor) as pg_conn:
-                load_from_sqlite(sqlite_conn, pg_conn)
+                    psycopg2.connect(**dsl, cursor_factory=DictCursor) as pgc:
+                load_from_sqlite(sqlite_conn, pgc)
         except psycopg2.OperationalError:
-            print("[Error] - Can't connect to Postgres DB")
+            print('[Error] - Can\'t connect to Postgres DB')
 
     else:
-        print("[Error] - Can't find source Sqlite3 DB file:", sqlitedbfile)
+        print('[Error] - Can\'t find source Sqlite3 DB file:', sqlitedbfile)
