@@ -110,9 +110,29 @@ class SQLiteExtractor:
     """
     curs = 0
 
-    def __init__(self, connection: sqlite3.Connection):
+    def __init__(self, connection: sqlite3.Connection, pgcon: _connection):
+        self.pgcurs = pgcon.cursor()
         self.curs = connection.cursor()
         print('[Start read data from SQLite db]')
+
+
+    def data_insert(self, mdata: list, datatable:str, config: list):
+
+        """PUT data in Postgres DB by parts, using PGCONFIG_DICT"""
+        print(f'    [Save {datatable} table in db]')
+        elems_count = len(mdata)
+        times = elems_count // slicesize
+        print('rows to insert:', elems_count)
+
+
+        sql_params = []
+        for elem in mdata:
+            sql_params += ((astuple(elem)),)
+
+        vars_count = ", ".join("%s" for _ in range(config[1]))
+        sql_query = f"INSERT INTO content.{datatable} ({config[0]}) VALUES ({vars_count}) ON CONFLICT (id) DO UPDATE SET id=EXCLUDED.id;"
+        self.pgcurs.executemany(sql_query, sql_params)
+
 
 
     def extract_all_data(self):
@@ -123,25 +143,29 @@ class SQLiteExtractor:
             print(f'    [Get data] from {tablename}')
             sql_query = f"SELECT {configvalue[0]} FROM {tablename};"
             self.curs.execute(sql_query)
-            data_list = []
+
             iter_n = 0
             class_name=globals()[configvalue[1]]
             # print(class_name)
             while True:
+                data_list = []
                 result = self.curs.fetchmany(100)
                 if not result:
                     break
                 for row in result:
                     data_list += [class_name(*row)]
-                    break
+
                 # print("ITER", tablename)
             # here i should push this
-            print(f"[Push] {tablename} data to PG")
+            # print(data_list)
+            # exit()
             # print(pgconfig_dict[tablename])
             # print("SEL:",type(data_list), data_list)
-            # PostgresSaver.data_insert(self, data_list, tablename, pgconfig_dict[tablename])
-            iter_n += 1
+                self.data_insert(data_list, tablename, pgconfig_dict[tablename])
+
             # exit()
+
+
 
 
 def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
@@ -155,14 +179,14 @@ def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
                            Postrges DB
     """
     print("[All connections - ok]")
-    postgres_saver = PostgresSaver(pg_conn)
-    sqlite_extractor = SQLiteExtractor(connection)
+    # postgres_saver = PostgresSaver(pg_conn)
+    sqlite_extractor = SQLiteExtractor(connection, pg_conn)
 
 
     sqlite_extractor.extract_all_data()
 
     print()
-    postgres_saver.save_all_data(data)
+    # postgres_saver.save_all_data(data)
 
 
 if __name__ == '__main__':
