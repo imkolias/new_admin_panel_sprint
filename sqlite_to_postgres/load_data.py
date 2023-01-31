@@ -7,7 +7,7 @@ from modules.load_config import dsl, slicesize, datatables_list, \
     colsmatch_list
 from modules.dtclass_list import *
 from psycopg2.extensions import connection as _connection
-from psycopg2.extras import DictCursor
+from psycopg2.extras import DictCursor, execute_batch
 from contextlib import contextmanager
 
 
@@ -58,7 +58,7 @@ class SQLiteExtractor:
         print('[Class init complete]')
 
     def data_insert(self, mdata: list, datatable: str):
-        """PUT data in Postgres DB by parts, using PGCONFIG_DICT"""
+        """PUT data in Postgres DB by parts"""
         print('[W]', end="")
         sql_params = []
         for elem in mdata:
@@ -73,11 +73,12 @@ class SQLiteExtractor:
                     f" ({vars_count}) ON CONFLICT (id) " \
                     f"DO UPDATE SET id=EXCLUDED.id;"
 
-        self.pgcurs.executemany(sql_query, sql_params)
+        execute_batch(self.pgcurs, sql_query, sql_params)
+
 
     def extract_all_and_push(self):
-        """Go through tables list in config SQLTCONFIG_DICT,
-        select SLICESIZE from it, and push DATA_LIST to DATA_INSERT method"""
+        """Go through tables list in config DATATABLES_LIST,
+        select SLICESIZE from DB, and push DATA_LIST to DATA_INSERT method"""
         print("[Start copy process]")
 
         for tablename, configvalue in datatables_list.items():
@@ -96,12 +97,8 @@ class SQLiteExtractor:
                     print(f' ({row_count} rows writed)')
                     break
                 for row in result:
-                    # print(dict(row))
-                    # print(table_config(self.curs, row))
-                    # print(data_reformat(table_config(self.curs, row)))
-                    # # print(type(row), type(table_config(self.curs, row)))
-                    # exit()
                     data_list += [class_name(**data_reformat(dict(row)))]
+
                 row_count += len(data_list)
 
                 self.data_insert(data_list, tablename)
