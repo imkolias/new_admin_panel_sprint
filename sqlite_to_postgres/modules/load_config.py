@@ -16,40 +16,22 @@ dsl = {
 # Size of each slize that will be SELECTED and then INSERTED in to target DB
 slicesize = 500
 
-# Config dicts for table matching
-# config for POSTGRES table, format:
-# table_name: [table cols names in table ordered like in right dataclass,
-# table cols number]
-# pgconfig_dict = {
-#     "film_work": ["type, title, description, creation_date, created, modified,"
-#                   " rating, id", 8],
-#     "genre": ["name, description, created, modified, id", 5],
-#     "person": ["full_name, created, modified, id", 4],
-#     "genre_film_work": ["film_work_id, genre_id, created, id", 4],
-#     "person_film_work": ["film_work_id, person_id, role, created, id", 5]
-#                }
-#
-# # config for SQLite DB table
-# # table_name: [table cols names in table ordered like in right dataclass,
-# # DATACLASS name]
-# # sqltconfig_dict = {
-# #     "film_work": ["type, title, description, creation_date, created_at, "
-# #                   "updated_at, rating, id", 'Movie'],
-# #     "genre": ["name, description, created_at, updated_at, id", 'Genre'],
-# #     "person": ["full_name, created_at, updated_at, id", 'Person'],
-# #     "genre_film_work": ["film_work_id, genre_id, created_at, id",
-# #                         'GenreFilmWork'],
-# #     "person_film_work": ["film_work_id, person_id, role, created_at,"
-# #                          " id", 'PersonFilmWork']
-# #                }
-
-
+# Config dict for table-dataclass matching
+# table_name: DataClass
 datatables_list = {
     "film_work": "FilmWork",
     "genre": "Genre",
     "person": "Person",
     "genre_film_work": "GenreFilmWork",
     "person_film_work": "PersonFilmWork"
+}
+
+# table names matching between SOURCE and TARGET col names
+# source_table_col_name:target_table_col_name
+colsmatch_list = {
+    "created_at": "created",
+    "updated_at": "modified",
+    "file_path": ""
 }
 
 

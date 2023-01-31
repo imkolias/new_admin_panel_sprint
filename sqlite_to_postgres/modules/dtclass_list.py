@@ -4,31 +4,31 @@ import uuid
 
 @dataclass
 class FilmWork:
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
-    title: str = field(default="")
-    description: str = field(default="")
-    creation_date: str = field(default="")
+    title: str
+    description: str
+    creation_date: str
+    type: str
+    created: str
     rating: float = field(default=0.0)
-    type: str = field(default="")
-    created: str = field(default="")
     modified: str = field(default="")
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
 
 
 @dataclass
 class Genre:
+    name: str
+    description: str
+    created: str
+    modified: str
     id: uuid.UUID = field(default_factory=uuid.uuid4)
-    name: str = field(default="")
-    description: str = field(default="")
-    created: str = field(default="")
-    modified: str = field(default="")
 
 
 @dataclass
 class Person:
+    full_name: str
+    created: str
+    modified: str
     id: uuid.UUID = field(default_factory=uuid.uuid4)
-    full_name: str = field(default="")
-    created: str = field(default="")
-    modified: str = field(default="")
 
 
 @dataclass
@@ -46,7 +46,6 @@ class PersonFilmWork:
     person_id: str = field(default="")
     role: str = field(default="")
     created: str = field(default="")
-
 
 
 if __name__ == '__main__':

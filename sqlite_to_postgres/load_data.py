@@ -3,7 +3,8 @@ import os
 import psycopg2
 
 from dataclasses import astuple, asdict
-from modules.load_config import dsl, slicesize, datatables_list
+from modules.load_config import dsl, slicesize, datatables_list, \
+    colsmatch_list
 from modules.dtclass_list import *
 from psycopg2.extensions import connection as _connection
 from psycopg2.extras import DictCursor
@@ -17,20 +18,26 @@ def conn_context(db_path: str):
     yield conn
     conn.close()
 
+def table_config(cursor, row: list):
+    data = {}
+    for index, column in enumerate(cursor.description):
+        data[column[0]] = row[index]
+    return data
+
 
 def data_reformat(datadict: dict) -> dict:
-    # print("START:", datadict)
-    if 'created_at' in datadict.keys():
-        datadict['created'] = datadict['created_at']
-        del(datadict['created_at'])
+    """ Get DATADICT data (one row from sql select) and proccess it
+    replace col names as in config COLSMATCH_LIST, and delete
+    col if no new name for it"""
+    for oldcolname, newcolname in colsmatch_list.items():
+        if newcolname != "":
+            if oldcolname in datadict.keys():
+                datadict[newcolname] = datadict[oldcolname]
+                del (datadict[oldcolname])
+        else:
+            if oldcolname in datadict.keys():
+                del (datadict[oldcolname])
 
-    if 'updated_at' in datadict.keys():
-        datadict['modified'] = datadict['updated_at']
-        del (datadict['updated_at'])
-
-    if 'file_path' in datadict.keys():
-        del (datadict['file_path'])
-    # print("END:", datadict)
     return datadict
 
 
@@ -55,27 +62,16 @@ class SQLiteExtractor:
         print('[W]', end="")
         sql_params = []
         for elem in mdata:
-            # print(elem)
 
-            sql_params += ((astuple(elem),))
-            # print(type(sql_params[0]))
-            # exit()
-        # print(sql_params[0])
+            sql_params += (astuple(elem),)
+
         cols_names = ", ".join(col for col in asdict(mdata[0]).keys())
         cols_count = len(asdict(mdata[0]).keys())
-
-        # print(cols_count, type(cols_names), cols_names)
-        # print("--",print(asdict(mdata[0]).keys()))
-        # exit()
 
         vars_count = ', '.join('%s' for _ in range(cols_count))
         sql_query = f"INSERT INTO content.{datatable} ({cols_names}) VALUES" \
                     f" ({vars_count}) ON CONFLICT (id) " \
                     f"DO UPDATE SET id=EXCLUDED.id;"
-        # print("WHO:", type(sql_query), type(sql_params))
-        # if datatable=="genre":
-        #     print("WHO:", type(sql_query), type(sql_params))
-        #     exit()
 
         self.pgcurs.executemany(sql_query, sql_params)
 
@@ -91,6 +87,7 @@ class SQLiteExtractor:
             self.curs.execute(sql_query)
             print("    ", end="")
             class_name = globals()[configvalue]
+
             while True:
                 print('[R]', end="")
                 data_list = []
@@ -99,6 +96,11 @@ class SQLiteExtractor:
                     print(f' ({row_count} rows writed)')
                     break
                 for row in result:
+                    # print(dict(row))
+                    # print(table_config(self.curs, row))
+                    # print(data_reformat(table_config(self.curs, row)))
+                    # # print(type(row), type(table_config(self.curs, row)))
+                    # exit()
                     data_list += [class_name(**data_reformat(dict(row)))]
                 row_count += len(data_list)
 
