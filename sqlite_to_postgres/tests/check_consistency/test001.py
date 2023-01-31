@@ -19,6 +19,14 @@ dsl = {
     'options': '-c search_path=content',
 }
 
+tables_rowcount_list = {
+    "film_work": "999",
+    "genre": "100",
+    "person": "5000",
+    "genre_film_work": "2500",
+    "person_film_work": "5600"
+}
+
 
 @contextmanager
 def conn_context(db_path: str):
@@ -81,9 +89,9 @@ class DataContainer:
     genre_film_works: list
     person_film_works: list
 
-
-table_list = ['film_work', 'person', 'genre',
-              'genre_film_work', 'person_film_work']
+#
+# table_list = ['film_work', 'person', 'genre',
+#               'genre_film_work', 'person_film_work']
 
 
 class TestDB(unittest.TestCase):
@@ -102,7 +110,7 @@ class TestDB(unittest.TestCase):
             sqlite_cur = sqlite_conn.cursor()
             posg_cur = pgc.cursor()
 
-            for table in table_list:
+            for table in tables_rowcount_list.keys():
                 self.assertEqual(t_equality_test(sqlite_cur, table),
                                  t_equality_test(posg_cur, table),
                                  f'error {table} tables not equal')
@@ -115,25 +123,10 @@ class TestDB(unittest.TestCase):
             sqlite_cur = sqlite_conn.cursor()
             posg_cur = pgc.cursor()
 
-            self.assertEqual(
-                row_equality(sqlite_cur, posg_cur, 'film_work', 999), True,
-                'error "film_work" tables not equal')
-
-            self.assertEqual(
-                row_equality(sqlite_cur, posg_cur, 'genre', 100), True,
-                'error "genre" tables not equal')
-
-            self.assertEqual(
-                row_equality(sqlite_cur, posg_cur, 'person', 5000), True,
-                'error "person" tables not equal')
-
-            self.assertEqual(
-                row_equality(sqlite_cur, posg_cur, 'genre_film_work', 2500),
-                True, 'error "genre_film_work" tables not equal')
-
-            self.assertEqual(
-                row_equality(sqlite_cur, posg_cur, 'person_film_work', 5600),
-                True, 'error "person_film_work" tables not equal')
+            for table, col_count in tables_rowcount_list.items():
+                self.assertEqual(
+                    row_equality(sqlite_cur, posg_cur, table, int(col_count)),
+                    True, f'error "{table}" tables not equal')
 
 
 def t_equality_test(cursor, table_name: str):
@@ -143,6 +136,8 @@ def t_equality_test(cursor, table_name: str):
 
 
 def row_equality(sqlite_cur, posg_cur, table_name: str, row_limit: int):
+    sqlite_datalist = []
+    pg_datalist = []
     if table_name == "film_work":
         # for table in table_list:
         squery = f"SELECT id, title, description, rating, type," \
@@ -172,6 +167,7 @@ def row_equality(sqlite_cur, posg_cur, table_name: str, row_limit: int):
                 result_flag = True
             else:
                 result_flag = False
+                break
 
     elif table_name == "genre":
         squery = f"SELECT id, name, description, created_at , updated_at " \

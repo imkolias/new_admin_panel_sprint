@@ -18,12 +18,6 @@ def conn_context(db_path: str):
     yield conn
     conn.close()
 
-def table_config(cursor, row: list):
-    data = {}
-    for index, column in enumerate(cursor.description):
-        data[column[0]] = row[index]
-    return data
-
 
 def data_reformat(datadict: dict) -> dict:
     """ Get DATADICT data (one row from sql select) and proccess it
@@ -39,7 +33,6 @@ def data_reformat(datadict: dict) -> dict:
                 del (datadict[oldcolname])
 
     return datadict
-
 
 
 class SQLiteExtractor:
@@ -74,7 +67,6 @@ class SQLiteExtractor:
                     f"DO UPDATE SET id=EXCLUDED.id;"
 
         execute_batch(self.pgcurs, sql_query, sql_params)
-
 
     def extract_all_and_push(self):
         """Go through tables list in config DATATABLES_LIST,
