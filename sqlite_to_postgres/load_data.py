@@ -2,8 +2,8 @@ import sqlite3
 import os
 import psycopg2
 
-from dataclasses import astuple
-from modules.load_config import dsl, slicesize, pgconfig_dict, sqltconfig_dict
+from dataclasses import astuple, asdict
+from modules.load_config import dsl, slicesize, datatables_list
 from modules.dtclass_list import *
 from psycopg2.extensions import connection as _connection
 from psycopg2.extras import DictCursor
@@ -19,8 +19,19 @@ def conn_context(db_path: str):
 
 
 def data_reformat(datadict: dict) -> dict:
+    # print("START:", datadict)
+    if 'created_at' in datadict.keys():
+        datadict['created'] = datadict['created_at']
+        del(datadict['created_at'])
 
+    if 'updated_at' in datadict.keys():
+        datadict['modified'] = datadict['updated_at']
+        del (datadict['updated_at'])
 
+    if 'file_path' in datadict.keys():
+        del (datadict['file_path'])
+    # print("END:", datadict)
+    return datadict
 
 
 
@@ -39,18 +50,32 @@ class SQLiteExtractor:
         self.curs = connection.cursor()
         print('[Class init complete]')
 
-    def data_insert(self, mdata: list, datatable: str, config: list):
+    def data_insert(self, mdata: list, datatable: str):
         """PUT data in Postgres DB by parts, using PGCONFIG_DICT"""
         print('[W]', end="")
-
         sql_params = []
         for elem in mdata:
-            sql_params += ((astuple(elem)),)
+            # print(elem)
 
-        vars_count = ', '.join('%s' for _ in range(config[1]))
-        sql_query = f"INSERT INTO content.{datatable} ({config[0]}) VALUES" \
+            sql_params += ((astuple(elem),))
+            # print(type(sql_params[0]))
+            # exit()
+        # print(sql_params[0])
+        cols_names = ", ".join(col for col in asdict(mdata[0]).keys())
+        cols_count = len(asdict(mdata[0]).keys())
+
+        # print(cols_count, type(cols_names), cols_names)
+        # print("--",print(asdict(mdata[0]).keys()))
+        # exit()
+
+        vars_count = ', '.join('%s' for _ in range(cols_count))
+        sql_query = f"INSERT INTO content.{datatable} ({cols_names}) VALUES" \
                     f" ({vars_count}) ON CONFLICT (id) " \
                     f"DO UPDATE SET id=EXCLUDED.id;"
+        # print("WHO:", type(sql_query), type(sql_params))
+        # if datatable=="genre":
+        #     print("WHO:", type(sql_query), type(sql_params))
+        #     exit()
 
         self.pgcurs.executemany(sql_query, sql_params)
 
@@ -59,13 +84,13 @@ class SQLiteExtractor:
         select SLICESIZE from it, and push DATA_LIST to DATA_INSERT method"""
         print("[Start copy process]")
 
-        for tablename, configvalue in sqltconfig_dict.items():
+        for tablename, configvalue in datatables_list.items():
             row_count = 0
             print(f'[SELECT TABLE] "{tablename}"')
-            sql_query = f"SELECT {configvalue[0]} FROM {tablename};"
+            sql_query = f"SELECT * FROM {tablename};"
             self.curs.execute(sql_query)
             print("    ", end="")
-            class_name = globals()[configvalue[1]]
+            class_name = globals()[configvalue]
             while True:
                 print('[R]', end="")
                 data_list = []
@@ -74,11 +99,10 @@ class SQLiteExtractor:
                     print(f' ({row_count} rows writed)')
                     break
                 for row in result:
-                    data_list += [class_name(*row)]
+                    data_list += [class_name(**data_reformat(dict(row)))]
                 row_count += len(data_list)
 
-                self.data_insert(data_list, tablename,
-                                 pgconfig_dict[tablename])
+                self.data_insert(data_list, tablename)
 
 
 def movedata(connection: sqlite3.Connection, pg_conn: _connection):

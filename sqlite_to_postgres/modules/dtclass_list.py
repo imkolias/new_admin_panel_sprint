@@ -3,72 +3,50 @@ import uuid
 
 
 @dataclass
-class Movie:
-    type: str
-    title: str
-    description: str
-    creation_date: str
-    # file_path: str
-    created_at: str
-    updated_at: str
-    rating: float = field(default=0.0)
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
-
-
-@dataclass
 class FilmWork:
-    type: str
-    title: str
-    description: str
-    creation_date: str
-    # file_path: str
-    created_at: str
-    updated_at: str
-    rating: float = field(default=0.0)
     id: uuid.UUID = field(default_factory=uuid.uuid4)
+    title: str = field(default="")
+    description: str = field(default="")
+    creation_date: str = field(default="")
+    rating: float = field(default=0.0)
+    type: str = field(default="")
+    created: str = field(default="")
+    modified: str = field(default="")
 
 
 @dataclass
 class Genre:
-    name: str
-    created_at: str
-    updated_at: str
-    description: str
     id: uuid.UUID = field(default_factory=uuid.uuid4)
+    name: str = field(default="")
+    description: str = field(default="")
+    created: str = field(default="")
+    modified: str = field(default="")
 
 
 @dataclass
 class Person:
-    full_name: str
-    created_at: str
-    updated_at: str
     id: uuid.UUID = field(default_factory=uuid.uuid4)
+    full_name: str = field(default="")
+    created: str = field(default="")
+    modified: str = field(default="")
 
 
 @dataclass
 class GenreFilmWork:
-    film_work_id: str
-    genre_id: str
-    created_at: str
     id: uuid.UUID = field(default_factory=uuid.uuid4)
+    film_work_id: str = field(default="")
+    genre_id: str = field(default="")
+    created: str = field(default="")
 
 
 @dataclass
 class PersonFilmWork:
-    film_work_id: str
-    person_id: str
-    role: str
-    created_at: str
     id: uuid.UUID = field(default_factory=uuid.uuid4)
+    film_work_id: str = field(default="")
+    person_id: str = field(default="")
+    role: str = field(default="")
+    created: str = field(default="")
 
-
-@dataclass
-class DataContainer:
-    movies: list
-    genres: list
-    persons: list
-    genre_film_works: list
-    person_film_works: list
 
 
 if __name__ == '__main__':
