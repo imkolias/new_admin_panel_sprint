@@ -1,8 +1,22 @@
 from dataclasses import dataclass, field
 import uuid
 
+
 @dataclass
 class Movie:
+    type: str
+    title: str
+    description: str
+    creation_date: str
+    # file_path: str
+    created_at: str
+    updated_at: str
+    rating: float = field(default=0.0)
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
+
+
+@dataclass
+class FilmWork:
     type: str
     title: str
     description: str
@@ -55,9 +69,6 @@ class DataContainer:
     persons: list
     genre_film_works: list
     person_film_works: list
-
-
-
 
 
 if __name__ == '__main__':
