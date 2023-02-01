@@ -1,14 +1,16 @@
 import sqlite3
 import os
-import psycopg2
-
 from dataclasses import astuple, asdict
-from modules.load_config import dsl, slicesize, datatables_list, \
-    colsmatch_list
-from modules.dtclass_list import *
+from contextlib import contextmanager
+
+import psycopg2
 from psycopg2.extensions import connection as _connection
 from psycopg2.extras import DictCursor, execute_batch
-from contextlib import contextmanager
+
+from modules.load_config import dsl, slicesize, datatables_list, \
+    colsmatch_list
+from modules.dtclass_list import FilmWork, Genre, Person, \
+    GenreFilmWork, PersonFilmWork
 
 
 @contextmanager
@@ -81,6 +83,7 @@ class SQLiteExtractor:
             print("    ", end="")
             class_name = globals()[configvalue]
 
+            # Process SQL return as BATCH
             while True:
                 print('[R]', end="")
                 data_list = []
@@ -88,11 +91,17 @@ class SQLiteExtractor:
                 if not result:
                     print(f' ({row_count} rows writed)')
                     break
+
+                # Here code get ALL SQL BATCH return (SLICESIZE = 500rows), and
+                # put it in DATA_LIST list
                 for row in result:
                     data_list += [class_name(**data_reformat(dict(row)))]
 
                 row_count += len(data_list)
 
+                # Take DATA_LIST (500 rows by default) and send it to
+                # POSTGRES DB, using data_insert funct
+                # so code use changeable memory count for store sql return
                 self.data_insert(data_list, tablename)
 
 

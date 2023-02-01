@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-01-23 19:31+0300\n"
+"POT-Creation-Date: 2023-02-01 12:43+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,62 +24,82 @@ msgstr ""
 msgid "app_name"
 msgstr "Кинотеатр"
 
-#: .\movies\models.py:29
-msgid "Person"
-msgstr "Участник"
-
-#: .\movies\models.py:30
-msgid "Persons"
-msgstr "Участники"
-
-#: .\movies\models.py:37
-msgid "Name"
-msgstr "Название"
-
-#: .\movies\models.py:38 .\movies\models.py:56
-msgid "Description"
-msgstr "Описание"
-
-#: .\movies\models.py:42
-msgid "Genre"
-msgstr "Жанр"
-
-#: .\movies\models.py:43
-msgid "Genres"
-msgstr "Жанры"
-
-#: .\movies\models.py:52 .\movies\models.py:74
+#: .\movies\models.py:9 .\movies\models.py:89
 msgid "Movie"
 msgstr "Фильм"
 
-#: .\movies\models.py:53
+#: .\movies\models.py:10
 msgid "TV Show"
 msgstr "Сериал"
 
+#: .\movies\models.py:14
+msgid "Actor"
+msgstr "Актер"
+
+#: .\movies\models.py:15
+msgid "Director"
+msgstr "Режиссёр"
+
+#: .\movies\models.py:16
+msgid "Writer"
+msgstr "Сценарист"
+
+#: .\movies\models.py:35
+#, fuzzy
+#| msgid "Person"
+msgid "Person name"
+msgstr "Участник"
+
+#: .\movies\models.py:39
+msgid "Person"
+msgstr "Участник"
+
+#: .\movies\models.py:40
+msgid "Persons"
+msgstr "Участники"
+
+#: .\movies\models.py:50
+msgid "Name"
+msgstr "Название"
+
+#: .\movies\models.py:51 .\movies\models.py:74
+msgid "Description"
+msgstr "Описание"
+
 #: .\movies\models.py:55
+msgid "Genre"
+msgstr "Жанр"
+
+#: .\movies\models.py:56
+msgid "Genres"
+msgstr "Жанры"
+
+#: .\movies\models.py:73
 msgid "Title"
 msgstr "Название"
 
-#: .\movies\models.py:57
+#: .\movies\models.py:75
 msgid "Creation date"
 msgstr "Дата создания"
 
-#: .\movies\models.py:59
+#: .\movies\models.py:77
 msgid "Rating"
 msgstr "Рейтинг"
 
-#: .\movies\models.py:63
+#: .\movies\models.py:81
 msgid "Movie type"
 msgstr "Тип"
 
-#: .\movies\models.py:69
-msgid "certificate"
-msgstr "Сертификат"
-
-#: .\movies\models.py:70
-msgid "file"
-msgstr "Файл"
-
-#: .\movies\models.py:75
+#: .\movies\models.py:90
 msgid "Movies"
 msgstr "Фильмы"
+
+#: .\movies\models.py:124
+msgid "Role"
+msgstr "Роль"
+
+#~ msgid "certificate"
+#~ msgstr "Сертификат"
+
+#~ msgid "file"
+#~ msgstr "Файл"

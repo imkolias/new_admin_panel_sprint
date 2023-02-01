@@ -5,9 +5,15 @@ from django.db.models import UniqueConstraint
 from django.utils.translation import gettext_lazy as _
 
 
-class ElemType(models.TextChoices):
+class MovieType(models.TextChoices):
     movie = 'movie', _('Movie')
     tv_show = 'tv show', _('TV Show')
+
+
+class WorkType(models.TextChoices):
+    person_actor = 'actor', _('Actor')
+    person_director = 'director', _('Director')
+    person_writer = 'writer', _('Writer')
 
 
 class TimeStampedMixin(models.Model):
@@ -26,7 +32,7 @@ class UUIDMixin(models.Model):
 
 
 class Person(UUIDMixin, TimeStampedMixin):
-    full_name = models.CharField('Person name', max_length=255)
+    full_name = models.CharField(_('Person name'), max_length=255)
 
     class Meta:
         db_table = "content\".\"person"
@@ -73,7 +79,7 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
                                  validators=[MinValueValidator(0),
                                              MaxValueValidator(100)])
     type = models.CharField(_('Movie type'),
-                            choices=ElemType.choices,
+                            choices=MovieType.choices,
                             max_length=7)
     genres = models.ManyToManyField(Genre, through='GenreFilmwork')
     roles = models.ManyToManyField(Person, through='PersonFilmwork')
@@ -96,8 +102,8 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
 
 
 class GenreFilmwork(UUIDMixin):
-    film_work = models.ForeignKey('Filmwork', on_delete=models.CASCADE)
-    genre = models.ForeignKey('Genre', on_delete=models.CASCADE)
+    film_work = models.ForeignKey(Filmwork, on_delete=models.CASCADE)
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -113,9 +119,10 @@ class GenreFilmwork(UUIDMixin):
 
 
 class PersonFilmwork(UUIDMixin):
-    film_work = models.ForeignKey('Filmwork', on_delete=models.CASCADE)
-    person = models.ForeignKey('Person', on_delete=models.CASCADE)
-    role = models.TextField('Role', null=True)
+    film_work = models.ForeignKey(Filmwork, on_delete=models.CASCADE)
+    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    role = models.TextField(_('Role'), choices=WorkType.choices,
+                            max_length=8)
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:

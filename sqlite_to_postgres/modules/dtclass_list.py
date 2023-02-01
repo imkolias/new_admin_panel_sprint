@@ -49,4 +49,4 @@ class PersonFilmWork:
 
 
 if __name__ == '__main__':
-    print("[Warning] It's module file, not for run!")
+    pass
