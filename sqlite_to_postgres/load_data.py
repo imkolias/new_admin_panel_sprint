@@ -2,10 +2,9 @@ import sqlite3
 import os
 import logging
 from dataclasses import astuple, asdict
-from contextlib import contextmanager
+from contextlib import contextmanager, closing
 
 import psycopg2
-from psycopg2.extensions import connection as _connection
 from psycopg2.extras import DictCursor, execute_batch
 
 from modules.load_config import dsl, slicesize, datatables_list, \
@@ -48,9 +47,10 @@ class SQLiteExtractor:
 
                           data_insert - insert data in target table
     """
-    def __init__(self, connection: sqlite3.Connection, pgcon: _connection):
-        self.pgcurs = pgcon.cursor()
-        self.curs = connection.cursor()
+    def __init__(self, sql_cursor, pg_cursor):
+
+        self.pgcurs = pg_cursor
+        self.curs = sql_cursor
 
     def data_insert(self, mdata: list, datatable: str):
         """PUT data in Postgres DB by parts"""
@@ -69,10 +69,9 @@ class SQLiteExtractor:
 
         execute_batch(self.pgcurs, sql_query, sql_params)
 
-    def extract_all_and_push(self):
+    def get_and_push(self):
         """Go through tables list in config DATATABLES_LIST,
         select SLICESIZE from DB, and push DATA_LIST to DATA_INSERT method"""
-        # print("[Start copy process]")
         logging.info("Start copy process")
         for tablename, configvalue in datatables_list.items():
             row_count = 0
@@ -90,13 +89,13 @@ class SQLiteExtractor:
                 if not result:
                     if row_count > 0:
                         logging.info(f'Table: "{tablename}" - '
-                                     f'{row_count} row successfully written')
+                                     f'{row_count} row\'s successfully written')
                     else:
                         logging.warning(f'Table: "{tablename}" - '
                                         f'ZERO(0) rows written')
                     break
 
-                # Here code get ALL SQL BATCH return (SLICESIZE = 500rows),
+                # This code get all sql return (SLICESIZE = 500rows),
                 # and put it in 'rowsto_insert' list
                 for row in result:
                     rowsto_insert += [class_name(**data_reformat(dict(row)))]
@@ -106,47 +105,35 @@ class SQLiteExtractor:
                 # Take 'rowsto_insert' (500 rows by default) and send it to
                 # POSTGRES DB, using data_insert funct
                 # so code use changeable memory count for store sql return
+                # and DON'T use memory for all data from table
                 self.data_insert(rowsto_insert, tablename)
-
-
-def movedata(connection: sqlite3.Connection, pg_conn: _connection):
-    """
-        load_from_sqlite : Main class, start all work.
-                           First: open connections to DB's
-                           Second: run Extract data from sqlite,
-                           put them on special datacontainer
-                           Third and final: run Data saver,
-                           insert all extracted data to
-                           Postrges DB
-    """
-    logging.info("All connections - OK")
-    sqlite_extractor = SQLiteExtractor(connection, pg_conn)
-
-    sqlite_extractor.extract_all_and_push()
 
 
 if __name__ == '__main__':
     sqlitedbfile = 'db.sqlite'
 
-    logging.basicConfig(
-        level=logging.INFO, filename="load_data.log", filemode="w",
+    logging.basicConfig(level=logging.INFO, filename="load_data.log",
+                        filemode="w",
                         format="%(asctime)s %(levelname)s %(message)s")
 
     if os.path.exists(sqlitedbfile):
         logging.info(f'Source SQLite file found: "{sqlitedbfile}"')
-        try:
-            with conn_context(sqlitedbfile) as sqlite_conn, \
-                    psycopg2.connect(**dsl, cursor_factory=DictCursor) as pgc:
-                movedata(sqlite_conn, pgc)
-        except psycopg2.OperationalError:
-            logging.critical('Can\'t connect to target Postgres DB '
-                             '(OperationalError)')
-        finally:
-            if sqlite_conn:
-                sqlite_conn.close()
-                logging.info('SQLite connection closed')
-            if pgc:
-                pgc.close()
-                logging.info('Postgres connection closed')
+        with closing(sqlite3.connect(sqlitedbfile)) as sqlite_conn:
+            sqlite_conn.row_factory = sqlite3.Row
+            with closing(sqlite_conn.cursor()) as sqlite_cur:
+                try:
+                    with closing(psycopg2.connect(**dsl,
+                                                  cursor_factory=DictCursor)) \
+                            as pgc:
+                        with closing(pgc.cursor()) as pgc_cur:
+
+                            logging.info("All connections - OK")
+                            sql_to_pg = SQLiteExtractor(sqlite_cur, pgc_cur)
+                            sql_to_pg.get_and_push()
+
+                except psycopg2.OperationalError:
+                    logging.critical('Can\'t connect to target Postgres DB '
+                                     '(OperationalError)')
+        logging.info('End of operations')
     else:
         logging.critical(f"Can't find source Sqlite3 DB file: {sqlitedbfile}")

@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS content.person (
     modified TIMESTAMP WITH TIME ZONE
 );
 
+CREATE UNIQUE INDEX person_idx ON content.person (id, full_name);
+
+
 
 CREATE TABLE IF NOT EXISTS content.genre_film_work (
     id uuid PRIMARY KEY,
@@ -51,6 +54,7 @@ CREATE TABLE IF NOT EXISTS content.person_film_work (
     created TIMESTAMP WITH TIME ZONE
 );
 
+CREATE UNIQUE INDEX film_work_person_idx ON content.person_film_work (film_work_id, person_id, role);
 
    
 ALTER ROLE current_user set search_path TO content, public;
