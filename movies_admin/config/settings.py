@@ -39,13 +39,7 @@ INSTALLED_APPS = [
 ]
 
 
-# add debug toolbar if DEBUG mode ON
-if DEBUG:
-    INSTALLED_APPS += ['debug_toolbar', ]
-
-
 MIDDLEWARE = [
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -55,6 +49,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
 ]
+
+
+# add debug toolbar if DEBUG mode ON
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+
 
 ROOT_URLCONF = 'config.urls'
 
