@@ -66,7 +66,6 @@ class SQLiteExtractor:
                     f" ({vars_count}) ON CONFLICT (id) " \
                     f"DO UPDATE SET id=EXCLUDED.id;"
 
-
         execute_batch(self.pgcurs, sql_query, sql_params)
 
         # COMMIT because WITH+CLOSING don't make commit, afrer
@@ -113,7 +112,6 @@ class SQLiteExtractor:
                 self.data_insert(rowsto_insert, tablename)
 
 
-
 if __name__ == '__main__':
     sqlitedbfile = 'db.sqlite'
 
@@ -129,13 +127,15 @@ if __name__ == '__main__':
             with closing(sqlite_conn.cursor()) as sqlite_cur:
 
                 try:
-                    with closing(psycopg2.connect(**dsl, cursor_factory=DictCursor)) as pgc:
+                    with closing(
+                            psycopg2.connect(**dsl,
+                                             cursor_factory=DictCursor))\
+                            as pgc:
                         with closing(pgc.cursor()) as pgc_cur:
 
                             logging.info("All connections - OK")
                             sql_to_pg = SQLiteExtractor(sqlite_cur, pgc_cur)
                             sql_to_pg.get_and_push()
-
 
                 except psycopg2.OperationalError:
                     logging.critical('Can\'t connect to target Postgres DB '
@@ -144,6 +144,3 @@ if __name__ == '__main__':
         logging.info('End of operations')
     else:
         logging.critical(f"Can't find source Sqlite3 DB file: {sqlitedbfile}")
-
-
-
