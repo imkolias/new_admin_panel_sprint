@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS content.film_work (
     modified TIMESTAMP WITH TIME ZONE
 );
 
-CREATE UNIQUE INDEX filmwork_idx ON content.film_work (id, title, creation_date, type);
+CREATE UNIQUE INDEX filmwork_idx ON content.film_work (id, title, type);
 
 
 CREATE TABLE IF NOT EXISTS content.genre (

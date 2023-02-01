@@ -6,9 +6,9 @@ import uuid
 class FilmWork:
     title: str
     description: str
-    creation_date: str
     type: str
     created: str
+    creation_date: str = field(default="1900-01-01 12:00:00.000000+00")
     rating: float = field(default=0.0)
     modified: str = field(default="")
     id: uuid.UUID = field(default_factory=uuid.uuid4)

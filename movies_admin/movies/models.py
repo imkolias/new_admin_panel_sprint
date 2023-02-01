@@ -70,9 +70,9 @@ class Genre(UUIDMixin, TimeStampedMixin):
 
 class Filmwork(UUIDMixin, TimeStampedMixin):
 
-    title = models.CharField(_('Title'), max_length=255)
+    title = models.TextField(_('Title'))
     description = models.TextField(_('Description'), blank=True)
-    creation_date = models.DateTimeField(_('Creation date'),
+    creation_date = models.DateField(_('Creation date'),
                                          auto_now_add=True)
     rating = models.IntegerField(_('Rating'),
                                  blank=True,
@@ -94,7 +94,7 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
         constraints = [
             models.UniqueConstraint(
                 name='filmwork_idx',
-                fields=['id', 'title', 'creation_date', 'type'],)
+                fields=['id', 'title', 'type'],)
         ]
 
     def __str__(self):
