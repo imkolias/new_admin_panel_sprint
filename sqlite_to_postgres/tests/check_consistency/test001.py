@@ -114,6 +114,8 @@ class TestDB(unittest.TestCase):
                 self.assertEqual(t_equality_test(sqlite_cur, table),
                                  t_equality_test(posg_cur, table),
                                  f'error {table} tables not equal')
+        sqlite_conn.close()
+        pgc.close()
 
     def test3_data_integrity_test(self):
         sqlitedbfile = '..\\..\\db.sqlite'
@@ -127,6 +129,9 @@ class TestDB(unittest.TestCase):
                 self.assertEqual(
                     row_equality(sqlite_cur, posg_cur, table, int(col_count)),
                     True, f'error "{table}" tables not equal')
+
+        sqlite_conn.close()
+        pgc.close()
 
 
 def t_equality_test(cursor, table_name: str):
