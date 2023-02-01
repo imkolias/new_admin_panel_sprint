@@ -69,6 +69,10 @@ class SQLiteExtractor:
 
         execute_batch(self.pgcurs, sql_query, sql_params)
 
+        # COMMIT because WITH+CLOSING don't make commit, afrer
+        # exit from context manager
+        pgc.commit()
+
     def get_and_push(self):
         """Go through tables list in config DATATABLES_LIST,
         select SLICESIZE from DB, and push DATA_LIST to DATA_INSERT method"""
